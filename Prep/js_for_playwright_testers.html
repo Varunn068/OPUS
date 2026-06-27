@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS for Playwright Testers</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #7c6af7;
+    --accent2: #4ecca3;
+    --warn: #f7a84a;
+    --text: #d4d8f0;
+    --muted: #6b7299;
+    --code-bg: #141722;
+    --tag-bg: #2a1f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a1d27 0%, #13162a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .logo { font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent2); }
+  .badge { background: var(--tag-bg); color: var(--accent); font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--accent); }
+  .tagline { color: var(--muted); font-size: 12px; }
+
+  /* NAV TABS */
+  .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { border-color: var(--accent); color: var(--text); }
+  .nav-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* LAYOUT */
+  .content { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  /* SECTION HEADER */
+  .sec-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-icon { font-size: 20px; }
+  .sec-title { font-size: 18px; font-weight: 700; color: #fff; }
+  .sec-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--surface2);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .card-title { font-weight: 600; color: #fff; font-size: 13px; flex: 1; }
+  .card-body { padding: 16px; }
+  .card-toggle { color: var(--muted); font-size: 16px; transition: transform 0.2s; }
+  .card.collapsed .card-body { display: none; }
+  .card.collapsed .card-toggle { transform: rotate(-90deg); }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 12px; }
+  .inline-code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 4px; color: var(--accent2);
+    font-family: monospace; font-size: 12px;
+  }
+
+  /* SYNTAX HIGHLIGHTING */
+  .kw { color: #c792ea; }      /* keywords */
+  .fn { color: #82aaff; }      /* functions */
+  .str { color: #c3e88d; }     /* strings */
+  .num { color: #f78c6c; }     /* numbers */
+  .cm { color: #546e7a; font-style: italic; } /* comments */
+  .var { color: #89ddff; }     /* variables */
+  .op { color: #89ddff; }      /* operators */
+  .cls { color: #ffcb6b; }     /* class names */
+  .pw { color: #4ecca3; }      /* playwright-specific */
+
+  /* TIPS AND NOTES */
+  .tip {
+    background: #0d2a1f;
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .tip strong { color: var(--accent2); }
+  .warn-box {
+    background: #2a1f0d;
+    border-left: 3px solid var(--warn);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .warn-box strong { color: var(--warn); }
+
+  /* GRID */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  th { background: var(--surface2); color: var(--accent); padding: 8px 12px; text-align: left; border: 1px solid var(--border); }
+  td { padding: 7px 12px; border: 1px solid var(--border); color: var(--text); }
+  tr:nth-child(even) td { background: #161924; }
+
+  p { margin: 8px 0; color: var(--text); font-size: 13px; }
+
+  /* PLAYWRIGHT TAG */
+  .pw-tag {
+    background: #0d2a24;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">JS <span>for Testers</span></div>
+    <span class="badge">Playwright / TypeScript Focus</span>
+  </div>
+  <p class="tagline">Filtered from "JavaScript Notes for Professionals" — only what you actually need for Playwright automation</p>
+  <nav class="nav" id="nav">
+    <button class="nav-tab active" data-section="s1">🔤 Variables & Types</button>
+    <button class="nav-tab" data-section="s2">🏹 Arrow Functions</button>
+    <button class="nav-tab" data-section="s3">⏳ Async / Await</button>
+    <button class="nav-tab" data-section="s4">🔗 Promises</button>
+    <button class="nav-tab" data-section="s5">📦 Arrays</button>
+    <button class="nav-tab" data-section="s6">🔍 Destructuring</button>
+    <button class="nav-tab" data-section="s7">📝 Template Literals</button>
+    <button class="nav-tab" data-section="s8">📄 JSON</button>
+    <button class="nav-tab" data-section="s9">📋 Scope & Closures</button>
+  </nav>
+</div>
+
+<div class="content">
+
+<!-- ===== SECTION 1: VARIABLES ===== -->
+<div class="section visible" id="s1">
+  <div class="sec-header">
+    <span class="sec-icon">🔤</span>
+    <div>
+      <div class="sec-title">Variables & Types</div>
+      <div class="sec-desc">let, const, var — what to use in test files and why</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">let vs const vs var</span>
+      <span class="pw-tag">USE IN TESTS</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <p>In Playwright TypeScript tests, <strong>always prefer <span class="inline-code">const</span></strong> for locators and page references. Use <span class="inline-code">let</span> for values that change. Never use <span class="inline-code">var</span>.</p>
+      <pre><span class="kw">const</span> <span class="var">page</span> = browser.newPage();         <span class="cm">// ✅ const — never reassigned</span>
+<span class="kw">const</span> <span class="var">loginBtn</span> = page.locator(<span class="str">'#login'</span>); <span class="cm">// ✅ const — locator ref</span>
+
+<span class="kw">let</span> <span class="var">retryCount</span> = <span class="num">0</span>;                      <span class="cm">// ✅ let — value changes</span>
+<span class="kw">let</span> <span class="var">response</span>;                              <span class="cm">// ✅ let — assigned later</span>
+
+<span class="kw">var</span> <span class="var">x</span> = <span class="num">1</span>;  <span class="cm">// ❌ avoid — function-scoped, hoisting issues</span></pre>
+      <table>
+        <tr><th>Keyword</th><th>Scope</th><th>Re-assignable</th><th>Use in tests</th></tr>
+        <tr><td><span class="inline-code">const</span></td><td>Block</td><td>No</td><td>Locators, page, configs</td></tr>
+        <tr><td><span class="inline-code">let</span></td><td>Block</td><td>Yes</td><td>Counters, API responses</td></tr>
+        <tr><td><span class="inline-code">var</span></td><td>Function</td><td>Yes</td><td>❌ Don't use</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Data Types you'll encounter in tests</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// String — selectors, URLs, text assertions</span>
+<span class="kw">const</span> <span class="var">url</span> = <span class="str">'https://app.example.com/login'</span>;
+<span class="kw">const</span> <span class="var">selector</span> = <span class="str">'button[data-testid="submit"]'</span>;
+
+<span class="cm">// Number — timeouts, counts</span>
+<span class="kw">const</span> <span class="var">timeout</span> = <span class="num">30000</span>;
+<span class="kw">const</span> <span class="var">itemCount</span> = <span class="num">5</span>;
+
+<span class="cm">// Boolean — flags</span>
+<span class="kw">const</span> <span class="var">headless</span> = <span class="kw">true</span>;
+
+<span class="cm">// null vs undefined</span>
+<span class="kw">let</span> <span class="var">result</span> = <span class="kw">null</span>;     <span class="cm">// intentionally empty</span>
+<span class="kw">let</span> <span class="var">pending</span>;           <span class="cm">// undefined — not yet assigned</span>
+
+<span class="cm">// Object — test data, API payloads</span>
+<span class="kw">const</span> <span class="var">user</span> = { name: <span class="str">'Varun'</span>, role: <span class="str">'admin'</span> };
+
+<span class="cm">// Array — list of items to test</span>
+<span class="kw">const</span> <span class="var">browsers</span> = [<span class="str">'chromium'</span>, <span class="str">'firefox'</span>, <span class="str">'webkit'</span>];</pre>
+      <div class="tip"><strong>typeof check:</strong> Use <span class="inline-code">typeof value === 'string'</span> to guard API response fields before using string methods on them.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">String methods testers use constantly</span>
+      <span class="pw-tag">USE IN TESTS</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="kw">const</span> <span class="var">text</span> = <span class="str">'  Welcome, Varun!  '</span>;
+
+text.<span class="fn">trim</span>()              <span class="cm">// 'Welcome, Varun!'  ← use before assertions</span>
+text.<span class="fn">includes</span>(<span class="str">'Varun'</span>)  <span class="cm">// true              ← soft contains check</span>
+text.<span class="fn">toLowerCase</span>()      <span class="cm">// 'welcome, varun!' ← case-insensitive compare</span>
+text.<span class="fn">replace</span>(<span class="str">'!'</span>, <span class="str">'.'</span>)  <span class="cm">// 'Welcome, Varun.' ← sanitise text</span>
+text.<span class="fn">split</span>(<span class="str">', '</span>)        <span class="cm">// ['Welcome', 'Varun!'] ← split to array</span>
+text.<span class="fn">startsWith</span>(<span class="str">'Welc'</span>) <span class="cm">// true</span>
+text.<span class="fn">endsWith</span>(<span class="str">'!'</span>)      <span class="cm">// true (after trim)</span>
+
+<span class="cm">// In Playwright assertions:</span>
+<span class="kw">await</span> expect(<span class="var">page</span>.<span class="fn">locator</span>(<span class="str">'h1'</span>)).<span class="fn">toContainText</span>(<span class="str">'Welcome'</span>);
+<span class="kw">await</span> expect(<span class="var">page</span>.<span class="fn">locator</span>(<span class="str">'h1'</span>)).<span class="fn">toHaveText</span>(text.<span class="fn">trim</span>());</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 2: ARROW FUNCTIONS ===== -->
+<div class="section" id="s2">
+  <div class="sec-header">
+    <span class="sec-icon">🏹</span>
+    <div>
+      <div class="sec-title">Arrow Functions</div>
+      <div class="sec-desc">The syntax you'll write in every Playwright callback</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Syntax variants — from simple to multiline</span>
+      <span class="pw-tag">USED EVERYWHERE</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// 1. Single expression — implicit return</span>
+<span class="kw">const</span> <span class="var">double</span> = <span class="var">x</span> => <span class="var">x</span> * <span class="num">2</span>;
+<span class="fn">double</span>(<span class="num">5</span>);  <span class="cm">// 10</span>
+
+<span class="cm">// 2. No args — needs parens</span>
+<span class="kw">const</span> <span class="var">getUrl</span> = () => <span class="str">'https://example.com'</span>;
+
+<span class="cm">// 3. Multiple args</span>
+<span class="kw">const</span> <span class="var">add</span> = (<span class="var">a</span>, <span class="var">b</span>) => <span class="var">a</span> + <span class="var">b</span>;
+
+<span class="cm">// 4. Multiline — needs curly braces + return</span>
+<span class="kw">const</span> <span class="var">login</span> = <span class="kw">async</span> (<span class="var">page</span>, <span class="var">user</span>) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">fill</span>(<span class="str">'#email'</span>, <span class="var">user</span>.email);
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">fill</span>(<span class="str">'#password'</span>, <span class="var">user</span>.password);
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'button[type=submit]'</span>);
+};
+
+<span class="cm">// 5. Return object — wrap in parens!</span>
+<span class="kw">const</span> <span class="var">makeUser</span> = (<span class="var">name</span>) => ({ name, role: <span class="str">'tester'</span> });</pre>
+      <div class="tip"><strong>Common mistake:</strong> Forgetting <span class="inline-code">async</span> before arrow functions in Playwright. Every function that uses <span class="inline-code">await</span> must be <span class="inline-code">async</span>.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Arrow functions in Playwright tests (real patterns)</span>
+      <span class="pw-tag">PLAYWRIGHT</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// test() callback — always async arrow</span>
+<span class="fn">test</span>(<span class="str">'login works'</span>, <span class="kw">async</span> ({ <span class="var">page</span> }) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">goto</span>(<span class="str">'/login'</span>);
+  <span class="kw">await</span> expect(<span class="var">page</span>).<span class="fn">toHaveTitle</span>(<span class="str">'Login'</span>);
+});
+
+<span class="cm">// beforeEach — setup with arrow</span>
+<span class="fn">test</span>.<span class="fn">beforeEach</span>(<span class="kw">async</span> ({ <span class="var">page</span> }) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">goto</span>(<span class="str">'/'</span>);
+});
+
+<span class="cm">// Helper function — reusable arrow</span>
+<span class="kw">const</span> <span class="fn">clickAndWait</span> = <span class="kw">async</span> (<span class="var">page</span>, <span class="var">selector</span>) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="var">selector</span>);
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">waitForLoadState</span>(<span class="str">'networkidle'</span>);
+};
+
+<span class="cm">// Array map — transform test data</span>
+<span class="kw">const</span> <span class="var">names</span> = [<span class="str">'Alice'</span>, <span class="str">'Bob'</span>];
+<span class="kw">const</span> <span class="var">users</span> = <span class="var">names</span>.<span class="fn">map</span>(<span class="var">name</span> => ({ name, role: <span class="str">'user'</span> }));
+
+<span class="cm">// filter — pick only failing scenarios</span>
+<span class="kw">const</span> <span class="var">failed</span> = <span class="var">results</span>.<span class="fn">filter</span>(<span class="var">r</span> => <span class="var">r</span>.status === <span class="str">'failed'</span>);</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">this keyword — why arrow functions are safer in tests</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <p>Arrow functions inherit <span class="inline-code">this</span> from the surrounding scope (lexical). Regular functions create their own <span class="inline-code">this</span>.</p>
+      <pre><span class="cm">// Problem with regular function in class</span>
+<span class="kw">class</span> <span class="cls">LoginPage</span> {
+  <span class="fn">constructor</span>() { <span class="kw">this</span>.url = <span class="str">'/login'</span>; }
+  
+  <span class="fn">setup</span>() {
+    <span class="fn">setTimeout</span>(<span class="kw">function</span>() {
+      console.<span class="fn">log</span>(<span class="kw">this</span>.url); <span class="cm">// ❌ undefined — 'this' is lost</span>
+    }, <span class="num">1000</span>);
+  }
+}
+
+<span class="cm">// Fixed with arrow function</span>
+<span class="kw">class</span> <span class="cls">LoginPage</span> {
+  <span class="fn">constructor</span>() { <span class="kw">this</span>.url = <span class="str">'/login'</span>; }
+  
+  <span class="fn">setup</span>() {
+    <span class="fn">setTimeout</span>(() => {
+      console.<span class="fn">log</span>(<span class="kw">this</span>.url); <span class="cm">// ✅ '/login' — arrow inherits 'this'</span>
+    }, <span class="num">1000</span>);
+  }
+}</pre>
+      <div class="warn-box"><strong>Note:</strong> Don't use arrow functions as class methods if you need to override them in a subclass. Use regular methods for POM classes, arrow functions for callbacks.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 3: ASYNC/AWAIT ===== -->
+<div class="section" id="s3">
+  <div class="sec-header">
+    <span class="sec-icon">⏳</span>
+    <div>
+      <div class="sec-title">Async / Await</div>
+      <div class="sec-desc">The most important JS concept for Playwright — every test uses it</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">How async/await works</span>
+      <span class="pw-tag">CRITICAL</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <p>An <span class="inline-code">async</span> function always returns a Promise. <span class="inline-code">await</span> pauses the function until that Promise resolves — without blocking the whole program.</p>
+      <pre><span class="cm">// async function signature</span>
+<span class="kw">async function</span> <span class="fn">getPageTitle</span>(<span class="var">page</span>) {
+  <span class="kw">const</span> <span class="var">title</span> = <span class="kw">await</span> <span class="var">page</span>.<span class="fn">title</span>();  <span class="cm">// waits for browser response</span>
+  <span class="kw">return</span> <span class="var">title</span>;
+}
+
+<span class="cm">// Equivalent arrow function form (used more in Playwright)</span>
+<span class="kw">const</span> <span class="fn">getPageTitle</span> = <span class="kw">async</span> (<span class="var">page</span>) => {
+  <span class="kw">const</span> <span class="var">title</span> = <span class="kw">await</span> <span class="var">page</span>.<span class="fn">title</span>();
+  <span class="kw">return</span> <span class="var">title</span>;
+};</pre>
+      <div class="tip"><strong>Rule:</strong> Any function that contains <span class="inline-code">await</span> MUST be declared with <span class="inline-code">async</span>. Playwright will throw if you forget.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">try/catch for error handling in tests</span>
+      <span class="pw-tag">PLAYWRIGHT</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Without error handling — test crashes on any error</span>
+<span class="fn">test</span>(<span class="str">'submit form'</span>, <span class="kw">async</span> ({ <span class="var">page</span> }) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#submit'</span>);
+  <span class="kw">await</span> expect(<span class="var">page</span>).<span class="fn">toHaveURL</span>(<span class="str">'/dashboard'</span>);
+});
+
+<span class="cm">// With try/catch — controlled failure with context</span>
+<span class="fn">test</span>(<span class="str">'submit form'</span>, <span class="kw">async</span> ({ <span class="var">page</span> }) => {
+  <span class="kw">try</span> {
+    <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#submit'</span>);
+    <span class="kw">await</span> expect(<span class="var">page</span>).<span class="fn">toHaveURL</span>(<span class="str">'/dashboard'</span>);
+  } <span class="kw">catch</span> (<span class="var">err</span>) {
+    console.<span class="fn">error</span>(<span class="str">'Submit failed:'</span>, <span class="var">err</span>.message);
+    <span class="kw">await</span> <span class="var">page</span>.<span class="fn">screenshot</span>({ path: <span class="str">'submit-fail.png'</span> });
+    <span class="kw">throw</span> <span class="var">err</span>; <span class="cm">// re-throw so test still fails in report</span>
+  }
+});</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Sequential vs Parallel execution</span>
+      <span class="pw-tag">PERFORMANCE</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Sequential — each awaits the previous (slow)</span>
+<span class="kw">const</span> <span class="var">user1</span> = <span class="kw">await</span> <span class="fn">getUser</span>(<span class="num">1</span>);
+<span class="kw">const</span> <span class="var">user2</span> = <span class="kw">await</span> <span class="fn">getUser</span>(<span class="num">2</span>);
+<span class="kw">const</span> <span class="var">user3</span> = <span class="kw">await</span> <span class="fn">getUser</span>(<span class="num">3</span>);
+<span class="cm">// Total: user1_time + user2_time + user3_time</span>
+
+<span class="cm">// Parallel — all start together (fast)</span>
+<span class="kw">const</span> [<span class="var">user1</span>, <span class="var">user2</span>, <span class="var">user3</span>] = <span class="kw">await</span> Promise.<span class="fn">all</span>([
+  <span class="fn">getUser</span>(<span class="num">1</span>),
+  <span class="fn">getUser</span>(<span class="num">2</span>),
+  <span class="fn">getUser</span>(<span class="num">3</span>),
+]);
+<span class="cm">// Total: max(user1_time, user2_time, user3_time)</span>
+
+<span class="cm">// Playwright — navigate + intercept in parallel</span>
+<span class="kw">await</span> Promise.<span class="fn">all</span>([
+  <span class="var">page</span>.<span class="fn">waitForResponse</span>(<span class="str">'/api/users'</span>),
+  <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#load-users'</span>),
+]);</pre>
+      <div class="tip"><strong>Playwright pattern:</strong> Use <span class="inline-code">Promise.all([waitForResponse, click])</span> to avoid race conditions — start listening BEFORE triggering the action.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Common async mistakes in Playwright</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// ❌ MISTAKE 1: Missing await — test passes before action completes</span>
+<span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#submit'</span>);    <span class="cm">// no await!</span>
+<span class="kw">await</span> expect(<span class="var">page</span>).<span class="fn">toHaveURL</span>(<span class="str">'/done'</span>); <span class="cm">// asserts too early</span>
+
+<span class="cm">// ✅ FIXED:</span>
+<span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#submit'</span>);
+<span class="kw">await</span> expect(<span class="var">page</span>).<span class="fn">toHaveURL</span>(<span class="str">'/done'</span>);
+
+<span class="cm">// ❌ MISTAKE 2: await inside forEach (doesn't wait)</span>
+<span class="var">items</span>.<span class="fn">forEach</span>(<span class="kw">async</span> (<span class="var">item</span>) => {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="var">item</span>.selector); <span class="cm">// forEach won't wait for each</span>
+});
+
+<span class="cm">// ✅ FIXED: use for...of loop</span>
+<span class="kw">for</span> (<span class="kw">const</span> <span class="var">item</span> <span class="kw">of</span> <span class="var">items</span>) {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="var">item</span>.selector); <span class="cm">// waits for each click</span>
+}</pre>
+      <div class="warn-box"><strong>Top bug:</strong> <span class="inline-code">forEach</span> does not await async callbacks. Always use <span class="inline-code">for...of</span> when you need sequential awaits in a loop.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 4: PROMISES ===== -->
+<div class="section" id="s4">
+  <div class="sec-header">
+    <span class="sec-icon">🔗</span>
+    <div>
+      <div class="sec-title">Promises</div>
+      <div class="sec-desc">The foundation of async/await — understand this to debug Playwright issues</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Promise states & basics</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <p>Every Playwright method returns a Promise. Knowing the states helps you debug flaky tests.</p>
+      <table>
+        <tr><th>State</th><th>Meaning</th><th>In Playwright</th></tr>
+        <tr><td>pending</td><td>Not yet done</td><td>Action in flight (click, navigate)</td></tr>
+        <tr><td>fulfilled</td><td>Completed with value</td><td>Response received, element found</td></tr>
+        <tr><td>rejected</td><td>Failed with error</td><td>Timeout, element not found</td></tr>
+      </table>
+      <pre><span class="cm">// Raw promise (you won't often write this, but good to understand)</span>
+<span class="kw">const</span> <span class="var">p</span> = <span class="kw">new</span> <span class="cls">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) => {
+  <span class="kw">if</span> (success) <span class="fn">resolve</span>(<span class="var">value</span>);
+  <span class="kw">else</span> <span class="fn">reject</span>(<span class="kw">new</span> <span class="cls">Error</span>(<span class="str">'something failed'</span>));
+});
+
+<span class="cm">// Consuming with .then/.catch (older style)</span>
+<span class="var">p</span>.<span class="fn">then</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="var">val</span>))
+ .<span class="fn">catch</span>(<span class="var">err</span> => console.<span class="fn">error</span>(<span class="var">err</span>));
+
+<span class="cm">// Consuming with async/await (modern — use this)</span>
+<span class="kw">try</span> {
+  <span class="kw">const</span> <span class="var">val</span> = <span class="kw">await</span> <span class="var">p</span>;
+  console.<span class="fn">log</span>(<span class="var">val</span>);
+} <span class="kw">catch</span> (<span class="var">err</span>) {
+  console.<span class="fn">error</span>(<span class="var">err</span>);
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Promise.all, Promise.race, Promise.allSettled</span>
+      <span class="pw-tag">PLAYWRIGHT</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Promise.all — wait for ALL to succeed (fails fast)</span>
+<span class="kw">const</span> [<span class="var">response</span>, _] = <span class="kw">await</span> Promise.<span class="fn">all</span>([
+  <span class="var">page</span>.<span class="fn">waitForResponse</span>(<span class="str">'/api/login'</span>),
+  <span class="var">page</span>.<span class="fn">click</span>(<span class="str">'#login-btn'</span>),
+]);
+console.<span class="fn">log</span>(<span class="kw">await</span> <span class="var">response</span>.<span class="fn">json</span>());
+
+<span class="cm">// Promise.allSettled — wait for ALL, even if some fail</span>
+<span class="kw">const</span> <span class="var">results</span> = <span class="kw">await</span> Promise.<span class="fn">allSettled</span>([
+  <span class="fn">checkEndpoint</span>(<span class="str">'/api/users'</span>),
+  <span class="fn">checkEndpoint</span>(<span class="str">'/api/orders'</span>),
+  <span class="fn">checkEndpoint</span>(<span class="str">'/api/products'</span>),
+]);
+<span class="var">results</span>.<span class="fn">forEach</span>((<span class="var">r</span>, <span class="var">i</span>) => {
+  <span class="kw">if</span> (<span class="var">r</span>.status === <span class="str">'rejected'</span>)
+    console.<span class="fn">log</span>(<span class="str">`Endpoint </span><span class="var">${i}</span><span class="str"> failed:`</span>, <span class="var">r</span>.reason);
+});
+
+<span class="cm">// Promise.race — first one wins (useful for timeouts)</span>
+<span class="kw">const</span> <span class="var">result</span> = <span class="kw">await</span> Promise.<span class="fn">race</span>([
+  <span class="fn">fetchData</span>(),
+  <span class="kw">new</span> <span class="cls">Promise</span>((_, <span class="var">rej</span>) =>
+    <span class="fn">setTimeout</span>(() => <span class="fn">rej</span>(<span class="kw">new</span> <span class="cls">Error</span>(<span class="str">'Timeout'</span>)), <span class="num">5000</span>))
+]);</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 5: ARRAYS ===== -->
+<div class="section" id="s5">
+  <div class="sec-header">
+    <span class="sec-icon">📦</span>
+    <div>
+      <div class="sec-title">Arrays</div>
+      <div class="sec-desc">Test data management, looping elements, filtering results</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Array methods for testers</span>
+      <span class="pw-tag">USED IN TESTS</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="kw">const</span> <span class="var">users</span> = [
+  { name: <span class="str">'Alice'</span>, role: <span class="str">'admin'</span>, active: <span class="kw">true</span> },
+  { name: <span class="str">'Bob'</span>,   role: <span class="str">'user'</span>,  active: <span class="kw">false</span> },
+  { name: <span class="str">'Carol'</span>, role: <span class="str">'admin'</span>, active: <span class="kw">true</span> },
+];
+
+<span class="cm">// filter — get active users only</span>
+<span class="var">users</span>.<span class="fn">filter</span>(<span class="var">u</span> => <span class="var">u</span>.active);
+<span class="cm">// [{name:'Alice',...}, {name:'Carol',...}]</span>
+
+<span class="cm">// map — extract just names</span>
+<span class="var">users</span>.<span class="fn">map</span>(<span class="var">u</span> => <span class="var">u</span>.name);
+<span class="cm">// ['Alice', 'Bob', 'Carol']</span>
+
+<span class="cm">// find — get first matching</span>
+<span class="var">users</span>.<span class="fn">find</span>(<span class="var">u</span> => <span class="var">u</span>.name === <span class="str">'Bob'</span>);
+<span class="cm">// {name:'Bob', role:'user', active:false}</span>
+
+<span class="cm">// some — at least one matches?</span>
+<span class="var">users</span>.<span class="fn">some</span>(<span class="var">u</span> => <span class="var">u</span>.role === <span class="str">'admin'</span>);  <span class="cm">// true</span>
+
+<span class="cm">// every — all match?</span>
+<span class="var">users</span>.<span class="fn">every</span>(<span class="var">u</span> => <span class="var">u</span>.active);  <span class="cm">// false</span>
+
+<span class="cm">// includes — simple value check</span>
+[<span class="str">'chromium'</span>, <span class="str">'firefox'</span>].<span class="fn">includes</span>(<span class="str">'webkit'</span>);  <span class="cm">// false</span>
+
+<span class="cm">// length</span>
+<span class="var">users</span>.length;  <span class="cm">// 3</span></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">for...of vs forEach vs map — when to use which</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>Method</th><th>Supports await?</th><th>Returns</th><th>Use when</th></tr>
+        <tr><td><span class="inline-code">for...of</span></td><td>✅ Yes</td><td>N/A</td><td>Sequential async actions</td></tr>
+        <tr><td><span class="inline-code">forEach</span></td><td>❌ No</td><td>undefined</td><td>Sync operations only</td></tr>
+        <tr><td><span class="inline-code">map</span></td><td>Partial*</td><td>new array</td><td>Transform data</td></tr>
+      </table>
+      <pre><span class="cm">// ✅ Sequential page fills — use for...of</span>
+<span class="kw">const</span> <span class="var">fields</span> = [
+  { selector: <span class="str">'#name'</span>, value: <span class="str">'Varun'</span> },
+  { selector: <span class="str">'#email'</span>, value: <span class="str">'v@test.com'</span> },
+];
+<span class="kw">for</span> (<span class="kw">const</span> <span class="var">field</span> <span class="kw">of</span> <span class="var">fields</span>) {
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">fill</span>(<span class="var">field</span>.selector, <span class="var">field</span>.value);
+}
+
+<span class="cm">// ✅ Parallel API calls — use map + Promise.all</span>
+<span class="kw">const</span> <span class="var">ids</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];
+<span class="kw">const</span> <span class="var">responses</span> = <span class="kw">await</span> Promise.<span class="fn">all</span>(
+  <span class="var">ids</span>.<span class="fn">map</span>(<span class="var">id</span> => <span class="fn">fetch</span>(<span class="str">`/api/user/</span><span class="var">${id}</span><span class="str">`</span>))
+);
+
+<span class="cm">// ✅ Get all element texts from page</span>
+<span class="kw">const</span> <span class="var">items</span> = <span class="kw">await</span> <span class="var">page</span>.<span class="fn">locator</span>(<span class="str">'li.item'</span>).<span class="fn">allTextContents</span>();
+<span class="kw">const</span> <span class="var">filtered</span> = <span class="var">items</span>.<span class="fn">filter</span>(<span class="var">t</span> => <span class="var">t</span>.<span class="fn">includes</span>(<span class="str">'Active'</span>));</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Spread & Rest operators</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Spread (...) — expand array/object</span>
+<span class="kw">const</span> <span class="var">base</span> = { headless: <span class="kw">true</span>, timeout: <span class="num">30000</span> };
+<span class="kw">const</span> <span class="var">config</span> = { ...<span class="var">base</span>, timeout: <span class="num">60000</span> }; <span class="cm">// override timeout</span>
+<span class="cm">// { headless: true, timeout: 60000 }</span>
+
+<span class="kw">const</span> <span class="var">tags</span> = [<span class="str">'@smoke'</span>, <span class="str">'@login'</span>];
+<span class="kw">const</span> <span class="var">allTags</span> = [...<span class="var">tags</span>, <span class="str">'@regression'</span>];
+<span class="cm">// ['@smoke', '@login', '@regression']</span>
+
+<span class="cm">// Rest (...) — collect remaining args</span>
+<span class="kw">function</span> <span class="fn">runTests</span>(<span class="var">suite</span>, ...<span class="var">tags</span>) {
+  console.<span class="fn">log</span>(<span class="var">suite</span>);  <span class="cm">// 'Login'</span>
+  console.<span class="fn">log</span>(<span class="var">tags</span>);   <span class="cm">// ['@smoke', '@critical']</span>
+}
+<span class="fn">runTests</span>(<span class="str">'Login'</span>, <span class="str">'@smoke'</span>, <span class="str">'@critical'</span>);</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 6: DESTRUCTURING ===== -->
+<div class="section" id="s6">
+  <div class="sec-header">
+    <span class="sec-icon">🔍</span>
+    <div>
+      <div class="sec-title">Destructuring</div>
+      <div class="sec-desc">Unpack objects and arrays — used constantly in Playwright fixtures</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Object destructuring</span>
+      <span class="pw-tag">PLAYWRIGHT FIXTURES</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Basic destructuring</span>
+<span class="kw">const</span> <span class="var">user</span> = { name: <span class="str">'Varun'</span>, role: <span class="str">'admin'</span>, age: <span class="num">25</span> };
+<span class="kw">const</span> { <span class="var">name</span>, <span class="var">role</span> } = <span class="var">user</span>;
+<span class="cm">// name = 'Varun', role = 'admin'</span>
+
+<span class="cm">// Rename while destructuring</span>
+<span class="kw">const</span> { <span class="var">name</span>: <span class="var">username</span>, <span class="var">role</span>: <span class="var">userRole</span> } = <span class="var">user</span>;
+<span class="cm">// username = 'Varun', userRole = 'admin'</span>
+
+<span class="cm">// Default values</span>
+<span class="kw">const</span> { <span class="var">timeout</span> = <span class="num">30000</span>, <span class="var">headless</span> = <span class="kw">true</span> } = {};
+<span class="cm">// timeout = 30000, headless = true (defaults used)</span>
+
+<span class="cm">// ✅ Playwright fixture — THIS is why you need to know this!</span>
+<span class="fn">test</span>(<span class="str">'dashboard loads'</span>, <span class="kw">async</span> ({ <span class="var">page</span>, <span class="var">request</span> }) => {
+  <span class="cm">// {page, request} is destructuring from the fixture object</span>
+  <span class="kw">await</span> <span class="var">page</span>.<span class="fn">goto</span>(<span class="str">'/dashboard'</span>);
+});
+
+<span class="cm">// Custom fixtures — your POM objects</span>
+<span class="fn">test</span>(<span class="str">'login flow'</span>, <span class="kw">async</span> ({ <span class="var">loginPage</span>, <span class="var">dashboardPage</span> }) => {
+  <span class="kw">await</span> <span class="var">loginPage</span>.<span class="fn">login</span>(<span class="str">'user@test.com'</span>, <span class="str">'pass'</span>);
+  <span class="kw">await</span> <span class="var">dashboardPage</span>.<span class="fn">verifyLoaded</span>();
+});</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Array destructuring & nested</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Array destructuring</span>
+<span class="kw">const</span> [<span class="var">first</span>, <span class="var">second</span>, , <span class="var">fourth</span>] = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>];
+<span class="cm">// first=10, second=20, fourth=40 (skipped 30)</span>
+
+<span class="cm">// Swap values</span>
+<span class="kw">let</span> <span class="var">a</span> = <span class="num">1</span>, <span class="var">b</span> = <span class="num">2</span>;
+[<span class="var">a</span>, <span class="var">b</span>] = [<span class="var">b</span>, <span class="var">a</span>];  <span class="cm">// a=2, b=1</span>
+
+<span class="cm">// With Promise.all result</span>
+<span class="kw">const</span> [<span class="var">apiResponse</span>, <span class="var">uiState</span>] = <span class="kw">await</span> Promise.<span class="fn">all</span>([
+  <span class="fn">callApi</span>(),
+  <span class="fn">getUiState</span>(<span class="var">page</span>),
+]);
+
+<span class="cm">// Nested object destructuring (API response)</span>
+<span class="kw">const</span> <span class="var">apiData</span> = {
+  data: { user: { id: <span class="num">42</span>, name: <span class="str">'Varun'</span> } },
+  status: <span class="num">200</span>
+};
+<span class="kw">const</span> { <span class="var">data</span>: { <span class="var">user</span>: { <span class="var">id</span>, <span class="var">name</span> } }, <span class="var">status</span> } = <span class="var">apiData</span>;
+<span class="cm">// id=42, name='Varun', status=200</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 7: TEMPLATE LITERALS ===== -->
+<div class="section" id="s7">
+  <div class="sec-header">
+    <span class="sec-icon">📝</span>
+    <div>
+      <div class="sec-title">Template Literals</div>
+      <div class="sec-desc">Build dynamic selectors, URLs, and log messages</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Backtick strings — interpolation & multiline</span>
+      <span class="pw-tag">USE IN TESTS</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="kw">const</span> <span class="var">env</span> = <span class="str">'staging'</span>;
+<span class="kw">const</span> <span class="var">userId</span> = <span class="num">42</span>;
+
+<span class="cm">// OLD WAY (concatenation) — avoid</span>
+<span class="kw">const</span> <span class="var">url1</span> = <span class="str">'https://'</span> + <span class="var">env</span> + <span class="str">'.app.com/user/'</span> + <span class="var">userId</span>;
+
+<span class="cm">// NEW WAY (template literal) — use this</span>
+<span class="kw">const</span> <span class="var">url2</span> = <span class="str">`https://</span><span class="var">${env}</span><span class="str">.app.com/user/</span><span class="var">${userId}</span><span class="str">`</span>;
+<span class="cm">// 'https://staging.app.com/user/42'</span>
+
+<span class="cm">// Expressions inside ${}</span>
+<span class="kw">const</span> <span class="var">count</span> = <span class="num">5</span>;
+console.<span class="fn">log</span>(<span class="str">`Found </span><span class="var">${count}</span><span class="str"> items (expected </span><span class="var">${count > 0 ? 'pass' : 'fail'}</span><span class="str">)`</span>);
+
+<span class="cm">// Multiline strings for SQL / selectors</span>
+<span class="kw">const</span> <span class="var">query</span> = <span class="str">`
+  SELECT * FROM users
+  WHERE active = true
+  AND role = 'admin'
+`</span>;
+
+<span class="cm">// Dynamic CSS selectors in Playwright</span>
+<span class="kw">const</span> <span class="var">rowIndex</span> = <span class="num">3</span>;
+<span class="kw">const</span> <span class="var">rowSelector</span> = <span class="str">`table tbody tr:nth-child(</span><span class="var">${rowIndex}</span><span class="str">)`</span>;
+<span class="kw">await</span> <span class="var">page</span>.<span class="fn">click</span>(<span class="var">rowSelector</span>);</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Real test examples with template literals</span>
+      <span class="pw-tag">PLAYWRIGHT</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// Dynamic test name</span>
+<span class="kw">const</span> <span class="var">browsers</span> = [<span class="str">'chromium'</span>, <span class="str">'firefox'</span>];
+<span class="var">browsers</span>.<span class="fn">forEach</span>(<span class="var">browser</span> => {
+  <span class="fn">test</span>(<span class="str">`login works on </span><span class="var">${browser}</span><span class="str">`</span>, <span class="kw">async</span> ({ <span class="var">page</span> }) => { ... });
+});
+
+<span class="cm">// Dynamic API endpoint</span>
+<span class="kw">const</span> <span class="fn">getEndpoint</span> = (<span class="var">resource</span>, <span class="var">id</span>) => <span class="str">`/api/</span><span class="var">${resource}</span><span class="str">/</span><span class="var">${id}</span><span class="str">`</span>;
+<span class="kw">const</span> <span class="var">resp</span> = <span class="kw">await</span> <span class="var">request</span>.<span class="fn">get</span>(<span class="fn">getEndpoint</span>(<span class="str">'users'</span>, <span class="num">42</span>));
+
+<span class="cm">// Failure message with context</span>
+<span class="kw">const</span> <span class="var">actual</span> = <span class="kw">await</span> <span class="var">page</span>.<span class="fn">locator</span>(<span class="str">'h1'</span>).<span class="fn">textContent</span>();
+<span class="kw">const</span> <span class="var">expected</span> = <span class="str">'Dashboard'</span>;
+<span class="kw">if</span> (<span class="var">actual</span> !== <span class="var">expected</span>) {
+  <span class="kw">throw</span> <span class="kw">new</span> <span class="cls">Error</span>(<span class="str">`Expected "</span><span class="var">${expected}</span><span class="str">" but got "</span><span class="var">${actual}</span><span class="str">"`</span>);
+}
+
+<span class="cm">// Screenshot filename with timestamp</span>
+<span class="kw">const</span> <span class="var">ts</span> = <span class="kw">new</span> <span class="cls">Date</span>().<span class="fn">toISOString</span>().<span class="fn">replace</span>(<span class="str">/[:.]/g</span>, <span class="str">'-'</span>);
+<span class="kw">await</span> <span class="var">page</span>.<span class="fn">screenshot</span>({ path: <span class="str">`screenshots/fail-</span><span class="var">${ts}</span><span class="str">.png`</span> });</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 8: JSON ===== -->
+<div class="section" id="s8">
+  <div class="sec-header">
+    <span class="sec-icon">📄</span>
+    <div>
+      <div class="sec-title">JSON</div>
+      <div class="sec-desc">Parse API responses, build request bodies, read test data files</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">JSON.parse and JSON.stringify</span>
+      <span class="pw-tag">API TESTING</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// JSON.parse — string → JS object (API response body)</span>
+<span class="kw">const</span> <span class="var">raw</span> = <span class="str">'{"id":42,"name":"Varun","active":true}'</span>;
+<span class="kw">const</span> <span class="var">obj</span> = JSON.<span class="fn">parse</span>(<span class="var">raw</span>);
+<span class="cm">// obj.id === 42, obj.name === 'Varun'</span>
+
+<span class="cm">// JSON.stringify — JS object → string (request body)</span>
+<span class="kw">const</span> <span class="var">payload</span> = { email: <span class="str">'v@test.com'</span>, password: <span class="str">'secret'</span> };
+<span class="kw">const</span> <span class="var">bodyStr</span> = JSON.<span class="fn">stringify</span>(<span class="var">payload</span>);
+<span class="cm">// '{"email":"v@test.com","password":"secret"}'</span>
+
+<span class="cm">// Pretty print for debugging</span>
+console.<span class="fn">log</span>(JSON.<span class="fn">stringify</span>(<span class="var">obj</span>, <span class="kw">null</span>, <span class="num">2</span>));
+<span class="cm">// {</span>
+<span class="cm">//   "id": 42,</span>
+<span class="cm">//   "name": "Varun"</span>
+<span class="cm">// }</span></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">JSON in Playwright API tests</span>
+      <span class="pw-tag">PLAYWRIGHT</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// POST with JSON body</span>
+<span class="kw">const</span> <span class="var">response</span> = <span class="kw">await</span> <span class="var">request</span>.<span class="fn">post</span>(<span class="str">'/api/users'</span>, {
+  data: { name: <span class="str">'Varun'</span>, role: <span class="str">'admin'</span> }  <span class="cm">// Playwright auto-serializes</span>
+});
+
+<span class="cm">// Parse response</span>
+<span class="kw">const</span> <span class="var">body</span> = <span class="kw">await</span> <span class="var">response</span>.<span class="fn">json</span>();
+expect(<span class="var">body</span>.id).<span class="fn">toBeDefined</span>();
+expect(<span class="var">body</span>.name).<span class="fn">toBe</span>(<span class="str">'Varun'</span>);
+
+<span class="cm">// Load test data from JSON file</span>
+<span class="kw">import</span> <span class="var">testUsers</span> <span class="kw">from</span> <span class="str">'./data/users.json'</span>;
+<span class="cm">// or:</span>
+<span class="kw">const</span> <span class="var">fs</span> = require(<span class="str">'fs'</span>);
+<span class="kw">const</span> <span class="var">users</span> = JSON.<span class="fn">parse</span>(<span class="var">fs</span>.<span class="fn">readFileSync</span>(<span class="str">'./data/users.json'</span>, <span class="str">'utf8'</span>));
+
+<span class="cm">// Intercept and modify API response</span>
+<span class="kw">await</span> <span class="var">page</span>.<span class="fn">route</span>(<span class="str">'/api/user'</span>, <span class="kw">async</span> <span class="var">route</span> => {
+  <span class="kw">const</span> <span class="var">json</span> = { id: <span class="num">1</span>, name: <span class="str">'Mock User'</span>, active: <span class="kw">true</span> };
+  <span class="kw">await</span> <span class="var">route</span>.<span class="fn">fulfill</span>({ <span class="var">json</span> });  <span class="cm">// Playwright stringify's it</span>
+});</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 9: SCOPE & CLOSURES ===== -->
+<div class="section" id="s9">
+  <div class="sec-header">
+    <span class="sec-icon">📋</span>
+    <div>
+      <div class="sec-title">Scope & Closures</div>
+      <div class="sec-desc">Understand variable visibility in test files — debug "undefined" errors</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Block scope with let/const</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// let/const are block-scoped</span>
+{
+  <span class="kw">let</span> <span class="var">x</span> = <span class="num">10</span>;
+  <span class="kw">const</span> <span class="var">y</span> = <span class="num">20</span>;
+  <span class="cm">// x and y accessible here</span>
+}
+<span class="cm">// x and y NOT accessible here → ReferenceError</span>
+
+<span class="cm">// var leaks out of blocks (bad)</span>
+<span class="kw">if</span> (<span class="kw">true</span>) {
+  <span class="kw">var</span> <span class="var">leaked</span> = <span class="str">'oops'</span>;
+}
+console.<span class="fn">log</span>(<span class="var">leaked</span>); <span class="cm">// 'oops' ← this is why we avoid var</span>
+
+<span class="cm">// In test files — describe block scope</span>
+<span class="fn">test</span>.<span class="fn">describe</span>(<span class="str">'Login'</span>, () => {
+  <span class="kw">let</span> <span class="var">loginPage</span>;  <span class="cm">// accessible in all tests below</span>
+
+  <span class="fn">test</span>.<span class="fn">beforeEach</span>(<span class="kw">async</span> ({ <span class="var">page</span> }) => {
+    <span class="var">loginPage</span> = <span class="kw">new</span> <span class="cls">LoginPage</span>(<span class="var">page</span>);
+    <span class="kw">await</span> <span class="var">loginPage</span>.<span class="fn">open</span>();
+  });
+
+  <span class="fn">test</span>(<span class="str">'valid login'</span>, <span class="kw">async</span> () => {
+    <span class="kw">await</span> <span class="var">loginPage</span>.<span class="fn">login</span>(<span class="str">'user'</span>, <span class="str">'pass'</span>); <span class="cm">// ✅ accessible</span>
+  });
+});</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Closures — functions that remember their scope</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <p>A closure is when a function "remembers" variables from its outer scope even after the outer function has returned.</p>
+      <pre><span class="cm">// Classic closure pattern — factory function</span>
+<span class="kw">function</span> <span class="fn">createCounter</span>(<span class="var">start</span> = <span class="num">0</span>) {
+  <span class="kw">let</span> <span class="var">count</span> = <span class="var">start</span>;         <span class="cm">// this variable is "closed over"</span>
+  <span class="kw">return</span> {
+    <span class="fn">increment</span>: () => ++<span class="var">count</span>,
+    <span class="fn">reset</span>: () => { <span class="var">count</span> = <span class="var">start</span>; },
+    <span class="fn">get</span>: () => <span class="var">count</span>,
+  };
+}
+<span class="kw">const</span> <span class="var">retries</span> = <span class="fn">createCounter</span>();
+<span class="var">retries</span>.<span class="fn">increment</span>();  <span class="cm">// 1</span>
+<span class="var">retries</span>.<span class="fn">increment</span>();  <span class="cm">// 2</span>
+<span class="var">retries</span>.<span class="fn">get</span>();        <span class="cm">// 2</span>
+
+<span class="cm">// Practical: environment config builder</span>
+<span class="kw">function</span> <span class="fn">makeConfig</span>(<span class="var">baseUrl</span>) {
+  <span class="kw">return</span> (<span class="var">path</span>) => <span class="str">`</span><span class="var">${baseUrl}</span><span class="var">${path}</span><span class="str">`</span>;
+}
+<span class="kw">const</span> <span class="var">stagingUrl</span> = <span class="fn">makeConfig</span>(<span class="str">'https://staging.app.com'</span>);
+<span class="var">stagingUrl</span>(<span class="str">'/login'</span>);  <span class="cm">// 'https://staging.app.com/login'</span>
+<span class="var">stagingUrl</span>(<span class="str">'/api'</span>);    <span class="cm">// 'https://staging.app.com/api'</span></pre>
+      <div class="tip"><strong>Test use case:</strong> Closures power Playwright's Page Object Model — the <span class="inline-code">page</span> reference is captured in the constructor and "remembered" by all methods.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="card-title">Modules — import/export (used in POM files)</span>
+      <span class="card-toggle">▾</span>
+    </div>
+    <div class="card-body">
+      <pre><span class="cm">// pages/LoginPage.ts — named export</span>
+<span class="kw">export class</span> <span class="cls">LoginPage</span> {
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">page</span>) {}
+
+  <span class="kw">async</span> <span class="fn">login</span>(<span class="var">email</span>, <span class="var">password</span>) {
+    <span class="kw">await</span> <span class="kw">this</span>.<span class="var">page</span>.<span class="fn">fill</span>(<span class="str">'#email'</span>, <span class="var">email</span>);
+    <span class="kw">await</span> <span class="kw">this</span>.<span class="var">page</span>.<span class="fn">fill</span>(<span class="str">'#pass'</span>, <span class="var">password</span>);
+    <span class="kw">await</span> <span class="kw">this</span>.<span class="var">page</span>.<span class="fn">click</span>(<span class="str">'[type=submit]'</span>);
+  }
+}
+
+<span class="cm">// tests/login.spec.ts — import</span>
+<span class="kw">import</span> { <span class="cls">LoginPage</span> } <span class="kw">from</span> <span class="str">'../pages/LoginPage'</span>;
+
+<span class="cm">// Export test data</span>
+<span class="kw">export const</span> <span class="var">testUsers</span> = [
+  { email: <span class="str">'admin@test.com'</span>, password: <span class="str">'admin123'</span>, role: <span class="str">'admin'</span> },
+  { email: <span class="str">'user@test.com'</span>,  password: <span class="str">'user123'</span>,  role: <span class="str">'user'</span> },
+];
+
+<span class="cm">// Default export</span>
+<span class="kw">export default</span> <span class="kw">class</span> <span class="cls">BasePage</span> { ... }
+<span class="kw">import</span> <span class="cls">BasePage</span> <span class="kw">from</span> <span class="str">'../pages/BasePage'</span>;</pre>
+    </div>
+  </div>
+</div>
+
+</div><!-- end content -->
+
+<script>
+// Tab navigation
+document.getElementById('nav').addEventListener('click', e => {
+  const tab = e.target.closest('.nav-tab');
+  if (!tab) return;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  tab.classList.add('active');
+  document.getElementById(tab.dataset.section).classList.add('visible');
+});
+
+// Card collapsing
+function toggleCard(header) {
+  header.closest('.card').classList.toggle('collapsed');
+}
+</script>
+</body>
+</html>
